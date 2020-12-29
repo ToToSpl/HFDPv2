@@ -31,7 +31,8 @@ Not using buffers was a huge mistake in HFDPv1. Packets were blocking arrival on
 FEC (forward error correction) should give benefit of capability of repairing broken recived packets based on fec data.
 To use it, protocol should be rewritten.
 
-### 4. JSON configs.Random .txt files for keeping MAC adresses, and configurations sucks. Even more sucks to write dump function to read this data.
+### 4. JSON configs.
+Random .txt files for keeping MAC adresses, and configurations sucks. Even more sucks to write dump function to read this data.
 That is why I want to keep everything in nice JSON file for easy readability and implementation.
 
 ### 5. Moar threads.

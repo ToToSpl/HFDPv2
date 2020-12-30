@@ -1,6 +1,5 @@
 #include "main.h"
 #include "../lib/loguru/loguru.hpp"
-#include <iostream>
 
 int main(int argc, char *argv[])
 {

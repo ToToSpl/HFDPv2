@@ -1,0 +1,27 @@
+{
+  "HFDP": {
+    "version": 2.0,
+    "device_mac": "00 C0 CA 97 EE FD",
+    "HFDP_sockets": [
+      {
+        "port": 10000,
+        "fec": 1,
+        "target_mac": "00 C0 CA 97 C0 49",
+        "direction": "input",
+        "buffer_size": "1024",
+        "socket_type": "client",
+        "resending": 2
+      },
+      {
+        "port": 14550,
+        "fec": 1,
+        "target_mac": "00 C0 CA 97 C0 49",
+        "direction": "bidirectional",
+        "buffer_size": "2024",
+        "socket_type": "client",
+        "resending": 1
+      }
+    ],
+    "MAC_ADDRESSES": ["00 C0 CA 97 C0 49", "00 C0 CA 97 EE FD"]
+  }
+}

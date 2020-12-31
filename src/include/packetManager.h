@@ -36,7 +36,7 @@ namespace HFDP {
             PacketManager();
             ~PacketManager();
         public:
-            void pushFromSocket();
+            void pushFromSocket(std::shared_ptr<HFDP_Socket> sockDat, char* buf, std::size_t size);
             void popToSocket();
         public:
             void pushFromRadio();

@@ -42,13 +42,13 @@ namespace HFDP {
 	void UdpSocket::sockThread()
 	{
 		socklen_t len = sizeof(m_Addr);
-		int n = -1;
+		std::size_t n = -1;
 
 		while(*m_IsRunning && n == -1)
 		{
 			n = recvfrom(m_socket, m_TempBuf, m_SockData->getBufSize(), 
 						0, ( struct sockaddr *) &m_socket, &len);
-			m_Manager->pushFromSocket();
+			m_Manager->pushFromSocket(m_SockData, m_TempBuf, n);
 		}
 	}
 

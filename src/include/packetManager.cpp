@@ -12,6 +12,11 @@ namespace HFDP {
 
     }
 
+    void PacketManager::pushFromSocket(std::shared_ptr<HFDP_Socket> sockDat, char* buf, std::size_t size)
+    {
+        
+    }
+
     void PacketManager::addSocket(std::shared_ptr<HFDP_Socket> data, std::shared_ptr<UdpSocket> sock)
     {
         m_sockets.push_back(sock);

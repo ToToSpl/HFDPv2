@@ -6,12 +6,13 @@ set(CMAKE_CXX_FLAGS "-std=c++17 -Werror")
 
 add_executable(HFDP
     lib/loguru/loguru.cpp
-    lib/fec/fec.c
+    lib/hfdp/hfdp.c
     src/main.cpp
-    src/core/core.cpp
-    src/udpSocket/udpSocket.cpp
-    src/buffer/buffer.cpp
-    src/packetManager/packetManager.cpp
+    src/include/core.cpp
+    src/include/udpSocket.cpp
+    src/include/buffer.cpp
+    src/include/packetManager.cpp
+    src/include/hfdpSocket.cpp
 )
 
 target_link_libraries(HFDP

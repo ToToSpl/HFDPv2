@@ -1,12 +1,12 @@
 #include "core.h"
 #include <fstream>
-#include "../../lib/loguru/loguru.hpp"
 
 namespace HFDP {
 
     Core::Core()
     {
-
+        // m_queue_ptr = std::make_shared<moodycamel::BlockingConcurrentQueue<DataPacket>>(10);
+        m_manager = std::make_unique<PacketManager>();
     }
 
     Core::~Core()
@@ -37,33 +37,30 @@ namespace HFDP {
         LOG_F(INFO, "Reading config file...");
         
         m_Device_MAC = new char[MAC_SIZE];
-        string_to_mac(m_ConfigJson["HFDP"]["device_mac"], m_Device_MAC);
+        helpers::string_to_mac(m_ConfigJson["HFDP"]["device_mac"], m_Device_MAC);
 
         for(auto mac : m_ConfigJson["HFDP"]["MAC_ADDRESSES"])
         {
             char* temp = new char[MAC_SIZE];
-            string_to_mac(mac, temp);
+            helpers::string_to_mac(mac, temp);
             m_MAC_map.push_back(temp);
         }
-
-        m_Manager = std::make_shared<PacketManager>();
 
         for(auto sock : m_ConfigJson["HFDP"]["HFDP_sockets"])
         {
             auto tempSockData = std::make_shared<HFDP_Socket>(sock);
-            auto tempSock = std::make_shared<UdpSocket>(tempSockData, m_Manager);
-            m_Manager->addSocket(tempSockData, tempSock);
+            auto tempSock = std::make_shared<UdpSocket>(tempSockData);
+            m_manager->bindSocket(tempSock, tempSockData);
             m_sockets.push_back(tempSock);
             m_hfdp_sockets.push_back(tempSockData);
         }
 
-        return CoreState::Success;
+        m_pcap_device = std::make_shared<Pcap>(m_ConfigJson["HFDP"]["wifi_name"], m_Device_MAC);
+        m_manager->bindPcapDevice(m_pcap_device);
 
-    }
-
-    CoreState Core::stopSystem()
-    {
-        LOG_F(INFO, "Stopping system...");
+        bindManager();
+        bindPcap();
+        bindUDP();
 
         return CoreState::Success;
 
@@ -71,20 +68,23 @@ namespace HFDP {
 
     CoreState Core::bindUDP()
     {
+        LOG_F(INFO, "Binding sockets...");
         for(auto udpSock : m_sockets)
-            udpSock->startSocket();
+            udpSock->startSock();
         
         return CoreState::Success;
     }
 
-    void Core::string_to_mac(std::string const& s, char* mac) {
-        int last = -1;
-        int rc = sscanf(s.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx%n",
-                        mac, mac + 1, mac + 2, mac + 3, mac + 4, mac + 5,
-                        &last);
-        if(rc != 6 || s.size() != last)
-            LOG_F(ERROR, "Wrong MAC format!");
+    CoreState Core::bindPcap()
+    {
+        m_pcap_device->startDevice();
+        return CoreState::Success;
     }
 
+    CoreState Core::bindManager()
+    {
+        m_manager->startManager();
+        return CoreState::Success;
+    }
 
 }

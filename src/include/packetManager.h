@@ -1,55 +1,33 @@
 #ifndef HFDP_PACKET_MANAGER
 #define HFDP_PACKET_MANAGER
 
-#include "buffer.h"
-#include "hfdpSocket.h"
-#include <vector>
-
-#include <arpa/inet.h>
-#include <sys/socket.h>
+#include <memory>
 #include <thread>
 
+#include "udpSocket.h"
+#include "hfdpSocket.h"
+#include "pcapDevice.h"
+
 namespace HFDP {
-    class PacketManager;
-
-    class UdpSocket {
-    public:
-        UdpSocket(std::shared_ptr<HFDP_Socket> data, std::shared_ptr<PacketManager> manager);
-        ~UdpSocket();
-    public:
-        void startSocket();
-        void stopSocket();
-    private:
-        void sockThread();
-    private:
-        std::unique_ptr<bool> m_IsRunning;
-        std::shared_ptr<HFDP_Socket> m_SockData;
-        std::shared_ptr<PacketManager> m_Manager;
-        struct sockaddr_in m_Addr;
-		int m_socket = 0;
-        std::unique_ptr<std::thread> m_SockThread;
-        char* m_TempBuf;
-    };
-
     class PacketManager {
-        public:
-            PacketManager();
-            ~PacketManager();
-        public:
-            void pushFromSocket(std::shared_ptr<HFDP_Socket> sockDat, char* buf, std::size_t size);
-            void popToSocket();
-        public:
-            void pushFromRadio();
-            void popToRadio();
-        public:
-            void addSocket(std::shared_ptr<HFDP_Socket> data, std::shared_ptr<UdpSocket> sock);
-        private:
-            std::unique_ptr<Buffer::Buffer> m_InBuffer;
-            std::unique_ptr<Buffer::Buffer> m_OutBuffer;
-            char* m_MAC_host;
-            char* m_MAC_target;
-            std::vector<std::shared_ptr<HFDP_Socket>> m_socket_datas;
-            std::vector<std::shared_ptr<UdpSocket>> m_sockets;
+    public:
+        PacketManager();
+        ~PacketManager() { };
+    public:
+        inline void bindSocket(std::shared_ptr<UdpSocket> udp, std::shared_ptr<HFDP_Socket> info);
+        inline void bindPcapDevice(std::shared_ptr<Pcap> device);
+    public:
+        void startManager();
+    private:
+        void fromAirThread();
+        void fromLocalThread();
+    private:
+        std::unique_ptr<std::thread> m_air_thread;
+        std::unique_ptr<std::thread> m_local_thread;
+    private:
+        std::vector<std::pair<std::shared_ptr<UdpSocket>, std::shared_ptr<HFDP_Socket>>> m_sockets;
+        std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> m_from_air_queue;
+        std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> m_from_local_queue;
     };
 }
 

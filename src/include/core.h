@@ -3,8 +3,14 @@
 
 #include <string>
 #include "../../lib/json/json.hpp"
-#include "packetManager.h"
+#include "../../lib/queue/blockingconcurrentqueue.h"
+#include "../../lib/loguru/loguru.hpp"
+
+#include "udpSocket.h"
 #include "hfdpSocket.h"
+#include "dataPacket.h"
+#include "helpers.h"
+#include "packetManager.h"
 
 #define MAC_SIZE 6
 
@@ -27,22 +33,21 @@ namespace HFDP {
     public:
         CoreState loadConfig(std::string filepath);
         CoreState startSystem();
-        CoreState stopSystem();
     private:
         CoreState bindPcapDevice(std::string deviceName);
         CoreState bindUDP();
-        CoreState unBindUDP();
-    private:
-        void string_to_mac(std::string const& s, char* mac);
+        CoreState bindPcap();
+        CoreState bindManager();
+        
     private:
         nlohmann::json m_ConfigJson;
         char* m_Device_MAC;
         std::vector<char*> m_MAC_map;
     private:
-        std::shared_ptr<PacketManager> m_Manager;
-        std::vector<std::shared_ptr<UdpSocket>> m_sockets;
         std::vector<std::shared_ptr<HFDP_Socket>> m_hfdp_sockets;
-
+        std::vector<std::shared_ptr<UdpSocket>> m_sockets;
+        std::shared_ptr<Pcap> m_pcap_device;
+        std::unique_ptr<PacketManager> m_manager;
 
     };
 }

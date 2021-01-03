@@ -1,6 +1,7 @@
 {
   "HFDP": {
     "version": 2.0,
+    "wifi_name": "wlan1",
     "device_mac": "00:C0:CA:97:EE:FD",
     "HFDP_sockets": [
       {

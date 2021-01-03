@@ -3,6 +3,7 @@
 
 #include <string>
 #include "../../lib/json/json.hpp"
+#include "helpers.h"
 
 namespace HFDP {
     class HFDP_Socket {
@@ -27,8 +28,6 @@ namespace HFDP {
         int m_BufferSize;
         std::string m_SocketType;
         int m_Resending;
-    private:
-        inline void string_to_mac(std::string const& s, char* mac);
     };
 }
 

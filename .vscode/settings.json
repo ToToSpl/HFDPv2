@@ -85,6 +85,16 @@
         "ranges": "cpp",
         "shared_mutex": "cpp",
         "stop_token": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "any": "cpp",
+        "csignal": "cpp",
+        "coroutine": "cpp",
+        "future": "cpp",
+        "list": "cpp",
+        "set": "cpp",
+        "typeindex": "cpp",
+        "unordered_set": "cpp",
+        "variant": "cpp",
+        "source_location": "cpp"
     }
 }

@@ -3,23 +3,18 @@
 namespace HFDP {
     PacketManager::PacketManager()
     {
-        m_InBuffer = std::make_unique<Buffer::Buffer>(HFDP_DEFAULT_BUFFER_SIZE);
-        m_OutBuffer = std::make_unique<Buffer::Buffer>(HFDP_DEFAULT_BUFFER_SIZE);
+        m_from_air_queue = std::make_shared<moodycamel::BlockingConcurrentQueue<DataPacket>>(20);
+        m_from_local_queue = std::make_shared<moodycamel::BlockingConcurrentQueue<DataPacket>>(20);
     }
 
-    PacketManager::~PacketManager()
+    inline void PacketManager::bindSocket(std::shared_ptr<UdpSocket> udp, std::shared_ptr<HFDP_Socket> info)
     {
-
+        m_sockets.push_back({udp, info});
     }
 
-    void PacketManager::pushFromSocket(std::shared_ptr<HFDP_Socket> sockDat, char* buf, std::size_t size)
+    inline void PacketManager::bindPcapDevice(std::shared_ptr<Pcap> device)
     {
-        
-    }
-
-    void PacketManager::addSocket(std::shared_ptr<HFDP_Socket> data, std::shared_ptr<UdpSocket> sock)
-    {
-        m_sockets.push_back(sock);
-        m_socket_datas.push_back(data);
+        device->bindRecieveQueue(m_from_air_queue);
+        device->bindSendQueue(m_from_local_queue);
     }
 }

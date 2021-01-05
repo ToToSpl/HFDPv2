@@ -38,7 +38,6 @@ namespace HFDP {
         CoreState bindUDP();
         CoreState bindPcap();
         CoreState bindManager();
-        
     private:
         nlohmann::json m_ConfigJson;
         char* m_Device_MAC;

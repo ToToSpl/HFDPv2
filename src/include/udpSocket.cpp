@@ -6,8 +6,10 @@ namespace HFDP {
     UdpSocket::UdpSocket(std::shared_ptr<HFDP_Socket> sock_data): m_Sock_data(sock_data)
     {
 
-        m_queue_in = std::make_shared<moodycamel::BlockingConcurrentQueue<DataPacket>>(10);
+        //m_queue_in = std::make_shared<moodycamel::BlockingConcurrentQueue<DataPacket>>(10);
         m_queue_out = std::make_shared<moodycamel::BlockingConcurrentQueue<DataPacket>>(10);
+
+        m_ID = m_Sock_data->getID();
 
         if((m_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
         {

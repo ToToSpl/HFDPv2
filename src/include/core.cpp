@@ -83,8 +83,8 @@ namespace HFDP {
 
     CoreState Core::bindManager()
     {
+        m_manager->setMacs(m_MAC_map, m_Device_MAC);
         m_manager->startManager();
         return CoreState::Success;
     }
-
 }

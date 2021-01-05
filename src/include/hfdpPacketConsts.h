@@ -34,4 +34,33 @@
 #define FRACTURED_PACKET 0x40
 #define PACKET_END 0x80
 
+//current working header for alfa awus036nh
+
+//header taken from Packetspammer by Andy Green <andy@warmcat.com>
+//i treat this as magic spell
+const u_int8_t u8aRadiotapHeader[] = {
+	0x00, 0x00, // <-- radiotap version
+	0x19, 0x00, // <- radiotap header length
+	0x6f, 0x08, 0x00, 0x00, // <-- bitmap
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // <-- timestamp
+	0x00, // <-- flags
+	0x16, // <-- rate 22*500kbs
+	0x71, 0x09, 0xc0, 0x00, // <-- channel
+	0xde, // <-- antsignal
+	0x00, // <-- antnoise
+	0x01, // <-- antenna
+};
+
+const u_int8_t u8aIeeeHeader_beacon[] = {
+	0x08, 0x01, 0x00, 0x00, // frame control field (2 bytes), duration (2 bytes)
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff,// 1st byte of IEEE802.11 RA (mac) must be 0xff or something odd, otherwise strange things happen. second byte is the port (will be overwritten later)
+	0x13, 0x22, 0x33, 0x44, 0x55, 0x66, // mac
+	0x13, 0x22, 0x33, 0x44, 0x55, 0x66, // mac
+	0x10, 0x86, // IEEE802.11 seqnum, (will be overwritten later by Atheros firmware/wifi chip)
+};
+
+#define MAX_SINGLE_PACKET_SIZE 1024
+#define MAC_OFFSET 10
+#define MAC_SIZE 6
+
 #endif

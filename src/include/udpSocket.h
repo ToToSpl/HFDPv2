@@ -20,12 +20,16 @@ namespace HFDP {
         ~UdpSocket() { };
     public:
         void startSock();
-        inline std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> getRxQueue(){ return m_queue_in; };
+        inline void setRxQueue(std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> queue){ m_queue_in = queue; };
         inline std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> getTxQueue(){ return m_queue_out; };
+    public:
+        inline void setID(int id) { m_ID = id; };
+        inline int getID() { return m_ID; };
     private:
         void sockInThread();
         void sockOutThread();
     private:
+        int m_ID;
         std::shared_ptr<HFDP_Socket> m_Sock_data;
         std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> m_queue_out;
         std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> m_queue_in;

@@ -23,7 +23,5 @@ int main(int argc, char *argv[])
     LOG_F(WARNING, "Type enter to stop program");
     std::cin.get();
 
-    core.stopSystem();
-
     return 0;
 }

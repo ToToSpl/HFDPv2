@@ -1,4 +1,5 @@
 #include "pcapDevice.h"
+#include <cstring>
 
 static void rx_callback(u_int8_t *user, const struct pcap_pkthdr *h, const u_int8_t *bytes);
 
@@ -22,7 +23,7 @@ namespace HFDP {
         char szProgram[512];
         struct bpf_program bpfprogram;
         sprintf(szProgram, "wlan addr3 %.2x:%.2x:%.2x:%.2x:%.2x:%.2x and greater %i",
-            mac[0] & 0xFF, mac[1] & 0xff, mac[2] & 0xFF,
+            mac[0] & 0xFF, mac[1] & 0xFF, mac[2] & 0xFF,
             mac[3] & 0xFF, mac[4] & 0xFF, mac[5] & 0xFF,
             (CUT_RADIOTAP_SIZE + IEEE_SIZE));
 

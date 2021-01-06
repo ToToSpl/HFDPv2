@@ -1,14 +1,14 @@
 {
   "HFDP": {
     "version": 2.0,
-    "wifi_name": "wlan1",
-    "device_mac": "00:C0:CA:97:EE:FD",
+    "wifi_name": "wlx00c0ca97c049",
+    "device_mac": "00:C0:CA:97:C0:49",
     "HFDP_sockets": [
       {
         "id": 0,
         "port": 10000,
         "fec": false,
-        "target_mac": "00:C0:CA:97:C0:49",
+        "target_mac": "00:C0:CA:97:EE:FD",
         "direction": "input",
         "buffer_size": 1024,
         "socket_type": "client",

@@ -44,7 +44,7 @@ namespace HFDP {
             std::memcpy(id, (uint8_t*)tempPack.start + HFDP_START_PLACE + ID_OFFSET, ID_SIZE);
             std::memcpy(flags, (uint8_t*)tempPack.start + HFDP_START_PLACE + FLAGS_OFFSET, FLAGS_SIZE);
             std::memcpy(rssi, (uint8_t*)tempPack.start + HFDP_START_PLACE + RSSI_OFFSET, RSSI_SIZE);
-            std::memcpy(size, (uint16_t*)tempPack.start + HFDP_START_PLACE + SIZE_OFFSET, 1);
+            std::memcpy(size, (uint8_t*)tempPack.start + HFDP_START_PLACE + SIZE_OFFSET, 2);
             // TODO: write resend
             // check if this packet should be resend 
             // if(*flags & RESEND)
@@ -79,7 +79,7 @@ namespace HFDP {
                     toSend.id = *id;
                     toSend.size = *size;
                     toSend.start = new char[*size];
-                    std::memcpy(toSend.start, tempPack.start + HEADER_SIZE, *size);
+                    std::memcpy(toSend.start, tempPack.start + HFDP_START_PLACE + DATA_OFFSET, *size);
                     delete tempPack.start;
                     sockPair.first->getTxQueue()->enqueue(toSend);
                     break;
@@ -105,8 +105,8 @@ namespace HFDP {
                     toSend.start = new char[toSend.size];
                     std::memcpy(toSend.start, &u8aRadiotapHeader, RADIOTAP_SIZE);
                     std::memcpy(toSend.start + RADIOTAP_SIZE, &u8aIeeeHeader_beacon, IEEE_SIZE);
-                    std::memcpy(toSend.start + RADIOTAP_SIZE + IEEE_SIZE + MAC_OFFSET, m_this_mac, MAC_SIZE);
-                    std::memcpy(toSend.start + RADIOTAP_SIZE + IEEE_SIZE + MAC_OFFSET + MAC_SIZE, sockPair.second->getMAC(), MAC_SIZE);
+                    std::memcpy(toSend.start + RADIOTAP_SIZE + MAC_OFFSET, m_this_mac, MAC_SIZE);
+                    std::memcpy(toSend.start + RADIOTAP_SIZE + MAC_OFFSET + MAC_SIZE, sockPair.second->getMAC(), MAC_SIZE);
                     generateHFDPpacket(tempPack.id, flags, ++m_rssi, nullptr, tempPack.size, tempPack.start, toSend.start + RADIOTAP_SIZE + IEEE_SIZE);
                     m_from_local_queue->enqueue(toSend);
                     break;

@@ -44,7 +44,11 @@ namespace HFDP {
             std::memcpy(id, (uint8_t*)tempPack.start + HFDP_START_PLACE + ID_OFFSET, ID_SIZE);
             std::memcpy(flags, (uint8_t*)tempPack.start + HFDP_START_PLACE + FLAGS_OFFSET, FLAGS_SIZE);
             std::memcpy(rssi, (uint8_t*)tempPack.start + HFDP_START_PLACE + RSSI_OFFSET, RSSI_SIZE);
-            std::memcpy(size, (uint16_t*)tempPack.start + HFDP_START_PLACE + SIZE_OFFSET, SIZE_SIZE);
+            {
+                uint16_t size1 = *(tempPack.start + HFDP_START_PLACE + SIZE_OFFSET) & 0x00FF;
+                uint16_t size2 = *(tempPack.start + HFDP_START_PLACE + SIZE_OFFSET) & 0xFF00;
+                *size = size2 << 8 + size1;
+            }
             // TODO: write resend
             // check if this packet should be resend 
             // if(*flags & RESEND)
@@ -127,7 +131,12 @@ namespace HFDP {
             std::memset(buffer + REMAC_OFFSET, 0, REMAC_SIZE);
         else
             std::memcpy(buffer + REMAC_OFFSET, reMac, REMAC_SIZE);
-        std::memcpy(buffer + SIZE_OFFSET, &size, 1);
+        {
+            uint8_t size1 = size & 0x00FF;
+            uint8_t size2 = size & 0xFF00;
+            std::memcpy(buffer + SIZE_OFFSET, &size1, 1);
+            std::memcpy(buffer + SIZE_OFFSET+1, &size2, 1);
+        }
         std::memcpy(buffer + DATA_OFFSET, data, size);
         return {id, buffer, ((std::size_t)size + HEADER_SIZE)};
     }
@@ -141,7 +150,12 @@ namespace HFDP {
             std::memset(ptr + REMAC_OFFSET, 0, REMAC_SIZE);
         else
             std::memcpy(ptr + REMAC_OFFSET, reMac, REMAC_SIZE);
-        std::memcpy((uint16_t*)ptr + SIZE_OFFSET, &size, 2);
+        {
+            uint8_t size1 = size & 0x00FF;
+            uint8_t size2 = size & 0xFF00;
+            std::memcpy(ptr + SIZE_OFFSET, &size1, 1);
+            std::memcpy(ptr + SIZE_OFFSET+1, &size2, 1);
+        }
         std::memcpy(ptr + DATA_OFFSET, data, size);
         return {id, ptr, (std::size_t)(size + HEADER_SIZE)};
     }

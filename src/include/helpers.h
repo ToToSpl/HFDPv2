@@ -4,6 +4,7 @@
 #define MAC_SIZE 6
 
 #include <vector>
+#include "../../lib/loguru/loguru.hpp"
 
 namespace HFDP::helpers {
     inline void string_to_mac(std::string const& s, char* mac)
@@ -36,6 +37,18 @@ namespace HFDP::helpers {
             }
         }
         return thisInMap;
+    }
+
+    inline void hex_log(char* data, std::size_t len)
+    {
+        char* formatted = new char[len+1];
+        for(std::size_t i = 0; i < len; i++)
+        {
+            sprintf(formatted + i, "%X ", data[i]);
+        }
+        formatted[len] = '\n';
+        LOG_F(INFO, formatted);
+        delete formatted;
     }
 }
 

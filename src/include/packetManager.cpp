@@ -33,7 +33,7 @@ namespace HFDP {
         uint8_t *id = new uint8_t[ID_SIZE];
         uint8_t *flags = new uint8_t[FLAGS_SIZE];
         uint8_t *rssi = new uint8_t[RSSI_SIZE];
-        uint16_t *size = new uint16_t;
+        uint16_t size = 0;
         char *reMAC = new char[MAC_SIZE];
 
         while(1)
@@ -44,10 +44,11 @@ namespace HFDP {
             std::memcpy(id, (uint8_t*)tempPack.start + HFDP_START_PLACE + ID_OFFSET, ID_SIZE);
             std::memcpy(flags, (uint8_t*)tempPack.start + HFDP_START_PLACE + FLAGS_OFFSET, FLAGS_SIZE);
             std::memcpy(rssi, (uint8_t*)tempPack.start + HFDP_START_PLACE + RSSI_OFFSET, RSSI_SIZE);
+            //helpers::hex_log(tempPack.start + HFDP_START_PLACE + SIZE_OFFSET, tempPack.size - HFDP_START_PLACE - SIZE_OFFSET);
             {
-                uint16_t size1 = *(tempPack.start + HFDP_START_PLACE + SIZE_OFFSET) & 0x00FF;
-                uint16_t size2 = *(tempPack.start + HFDP_START_PLACE + SIZE_OFFSET) & 0xFF00;
-                *size = size2 << 8 + size1;
+                uint8_t size1 = (uint16_t)tempPack.start[HFDP_START_PLACE + SIZE_OFFSET];
+                uint8_t size2 = (uint8_t)tempPack.start[HFDP_START_PLACE + SIZE_OFFSET + 1];
+                size = (uint16_t)size2 << 8 | (uint16_t)size1;
             }
             // TODO: write resend
             // check if this packet should be resend 
@@ -81,10 +82,10 @@ namespace HFDP {
                 {
                     DataPacket toSend;
                     toSend.id = *id;
-                    toSend.size = *size;
-                    LOG_F(INFO, "size: %i", *size);
-                    toSend.start = new char[*size];
-                    std::memcpy(toSend.start, tempPack.start + HFDP_START_PLACE + DATA_OFFSET, *size);
+                    toSend.size = size;
+                    
+                    toSend.start = new char[size];
+                    std::memcpy(toSend.start, tempPack.start + HFDP_START_PLACE + DATA_OFFSET, size);
                     delete tempPack.start;
                     sockPair.first->getTxQueue()->enqueue(toSend);
                     break;
@@ -131,12 +132,10 @@ namespace HFDP {
             std::memset(buffer + REMAC_OFFSET, 0, REMAC_SIZE);
         else
             std::memcpy(buffer + REMAC_OFFSET, reMac, REMAC_SIZE);
-        {
-            uint8_t size1 = size & 0x00FF;
-            uint8_t size2 = size & 0xFF00;
-            std::memcpy(buffer + SIZE_OFFSET, &size1, 1);
-            std::memcpy(buffer + SIZE_OFFSET+1, &size2, 1);
-        }
+        uint16_t size1 = size & 0x00FF;   
+        uint16_t size2 = size >> 8;
+        std::memcpy(buffer + SIZE_OFFSET, &size1, 1);
+        std::memcpy(buffer + SIZE_OFFSET+1, &size2, 1);
         std::memcpy(buffer + DATA_OFFSET, data, size);
         return {id, buffer, ((std::size_t)size + HEADER_SIZE)};
     }
@@ -150,12 +149,10 @@ namespace HFDP {
             std::memset(ptr + REMAC_OFFSET, 0, REMAC_SIZE);
         else
             std::memcpy(ptr + REMAC_OFFSET, reMac, REMAC_SIZE);
-        {
-            uint8_t size1 = size & 0x00FF;
-            uint8_t size2 = size & 0xFF00;
-            std::memcpy(ptr + SIZE_OFFSET, &size1, 1);
-            std::memcpy(ptr + SIZE_OFFSET+1, &size2, 1);
-        }
+        uint16_t size1 = size & 0x00FF;   
+        uint16_t size2 = size >> 8;
+        std::memcpy(ptr + SIZE_OFFSET, &size1, 1);
+        std::memcpy(ptr + SIZE_OFFSET+1, &size2, 1);
         std::memcpy(ptr + DATA_OFFSET, data, size);
         return {id, ptr, (std::size_t)(size + HEADER_SIZE)};
     }

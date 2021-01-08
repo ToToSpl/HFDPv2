@@ -41,14 +41,11 @@ namespace HFDP::helpers {
 
     inline void hex_log(char* data, std::size_t len)
     {
-        char* formatted = new char[len+1];
         for(std::size_t i = 0; i < len; i++)
         {
-            sprintf(formatted + i, "%X ", data[i]);
+            printf("%02X:", (uint8_t)data[i]);
         }
-        formatted[len] = '\n';
-        LOG_F(INFO, formatted);
-        delete formatted;
+        printf("\n");
     }
 }
 

@@ -46,9 +46,9 @@ const u_int8_t u8aRadiotapHeader[] = {
 	0x00, // <-- flags
 	0x16, // <-- rate 22*500kbs
 	0x71, 0x09, 0xc0, 0x00, // <-- channel
-	0xde, // <-- antsignal
+	0x00, // <-- antsignal
 	0x00, // <-- antnoise
-	0x01, // <-- antenna
+	0x00, // <-- antenna
 };
 
 const u_int8_t u8aIeeeHeader_beacon[] = {

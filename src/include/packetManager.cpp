@@ -44,7 +44,7 @@ namespace HFDP {
             std::memcpy(id, (uint8_t*)tempPack.start + HFDP_START_PLACE + ID_OFFSET, ID_SIZE);
             std::memcpy(flags, (uint8_t*)tempPack.start + HFDP_START_PLACE + FLAGS_OFFSET, FLAGS_SIZE);
             std::memcpy(rssi, (uint8_t*)tempPack.start + HFDP_START_PLACE + RSSI_OFFSET, RSSI_SIZE);
-            //helpers::hex_log(tempPack.start + HFDP_START_PLACE + SIZE_OFFSET, tempPack.size - HFDP_START_PLACE - SIZE_OFFSET);
+            //helpers::hex_log(tempPack.start, tempPack.size);
             {
                 uint8_t size1 = (uint16_t)tempPack.start[HFDP_START_PLACE + SIZE_OFFSET];
                 uint8_t size2 = (uint8_t)tempPack.start[HFDP_START_PLACE + SIZE_OFFSET + 1];

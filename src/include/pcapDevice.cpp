@@ -10,10 +10,15 @@ namespace HFDP {
         char error_buffer[PCAP_ERRBUF_SIZE];
         int lookup_return_code;
 
-        m_global_device = pcap_open_live(device.c_str(), 1000, 1, 0, error_buffer);
+        m_global_device = pcap_open_live(device.c_str(), 8192, 1, 0, error_buffer);
         if (m_global_device == NULL) {
 		    LOG_F(ERROR, "Couldn't open wifi device %s: %s", device.c_str(), error_buffer);
 	    }
+
+        lookup_return_code = pcap_activate(m_global_device);
+        if(lookup_return_code !=0){
+            LOG_F(ERROR, "Error activating pcap device! %s", error_buffer);
+        }
 
         lookup_return_code = pcap_setnonblock(m_global_device, 1, error_buffer);
         if(lookup_return_code != 0){
@@ -28,11 +33,11 @@ namespace HFDP {
             (CUT_RADIOTAP_SIZE + IEEE_SIZE));
 
         if(pcap_compile(m_global_device, &bpfprogram, szProgram, 1, 0) == -1){
-            LOG_F(ERROR, "error in compiling pcap script!, %s", szProgram);
+            LOG_F(ERROR, "error in compiling pcap script!, %s, %s", szProgram, error_buffer);
         }
 
         if(pcap_setfilter(m_global_device, &bpfprogram) == -1){
-            LOG_F(ERROR, "error in setting filter!");
+            LOG_F(ERROR, "error in setting filter! %s", error_buffer);
         }
 
         pcap_freecode(&bpfprogram);

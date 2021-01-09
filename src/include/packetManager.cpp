@@ -114,6 +114,16 @@ namespace HFDP {
                     std::memcpy(toSend.start + RADIOTAP_SIZE + MAC_OFFSET, m_this_mac, MAC_SIZE);
                     std::memcpy(toSend.start + RADIOTAP_SIZE + MAC_OFFSET + MAC_SIZE, sockPair.second->getMAC(), MAC_SIZE);
                     generateHFDPpacket(tempPack.id, flags, ++m_rssi, nullptr, tempPack.size, tempPack.start, toSend.start + RADIOTAP_SIZE + IEEE_SIZE);
+                    if(sockPair.second->getResending() != 1)
+                    {
+                        for(int i = 1; i < sockPair.second->getResending(); i++)
+                        {
+                            DataPacket resend = toSend;
+                            resend.start = new char[toSend.size];
+                            std::memcpy(resend.start, toSend.start, toSend.size);
+                            m_from_local_queue->enqueue(resend);        
+                        }
+                    }
                     m_from_local_queue->enqueue(toSend);
                     break;
                 }
@@ -122,23 +132,6 @@ namespace HFDP {
         }
     }
 
-    DataPacket PacketManager::generateHFDPpacket(uint8_t id, uint8_t flags, uint8_t rssi, char* reMac, uint16_t size, char* data)
-    {
-        char* buffer = new char[size + HEADER_SIZE];
-        std::memcpy(buffer + ID_OFFSET, &id, ID_SIZE);
-        std::memcpy(buffer + FLAGS_OFFSET, &flags, FLAGS_SIZE);
-        std::memcpy(buffer + RSSI_OFFSET, &rssi, RSSI_SIZE);
-        if(reMac == nullptr)
-            std::memset(buffer + REMAC_OFFSET, 0, REMAC_SIZE);
-        else
-            std::memcpy(buffer + REMAC_OFFSET, reMac, REMAC_SIZE);
-        uint16_t size1 = size & 0x00FF;   
-        uint16_t size2 = size >> 8;
-        std::memcpy(buffer + SIZE_OFFSET, &size1, 1);
-        std::memcpy(buffer + SIZE_OFFSET+1, &size2, 1);
-        std::memcpy(buffer + DATA_OFFSET, data, size);
-        return {id, buffer, ((std::size_t)size + HEADER_SIZE)};
-    }
 
     DataPacket PacketManager::generateHFDPpacket(uint8_t id, uint8_t flags, uint8_t rssi, char* reMac, uint16_t size, char* data, char* ptr)
     {
@@ -157,4 +150,9 @@ namespace HFDP {
         return {id, ptr, (std::size_t)(size + HEADER_SIZE)};
     }
 
+    DataPacket PacketManager::generateHFDPpacket(uint8_t id, uint8_t flags, uint8_t rssi, char* reMac, uint16_t size, char* data)
+    {
+        char* buffer = new char[size + HEADER_SIZE];
+        return generateHFDPpacket(id, flags, rssi, reMac, size, data, buffer);
+    }
 }

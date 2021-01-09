@@ -14,6 +14,8 @@ namespace HFDP {
         inline int getID() { return m_ID; };
         inline int getPort() { return m_Port; };
         inline bool getFEC() { return m_FEC; };
+        inline unsigned int getFECm() { return m_FEC_m; };
+        inline unsigned int getFECn() { return m_FEC_n; };
         inline char* getMAC() { return m_Target_MAC; };
         inline std::string getDirection() { return m_Direction; };
         inline int getBufSize() { return m_BufferSize; };
@@ -23,11 +25,13 @@ namespace HFDP {
         int m_ID;
         int m_Port;
         bool m_FEC;
+        unsigned int m_FEC_m;
+        unsigned int m_FEC_n;
         char* m_Target_MAC;
         std::string m_Direction;
         int m_BufferSize;
         std::string m_SocketType;
-        int m_Resending;
+        unsigned int m_Resending;
     };
 }
 

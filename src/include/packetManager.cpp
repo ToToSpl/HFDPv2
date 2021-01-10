@@ -110,6 +110,7 @@ namespace HFDP {
 
         while(1)
         {
+            flags = 0;
             m_local_queue->wait_dequeue(tempPack);
             for(auto sockPair : m_sockets)
             {
@@ -118,6 +119,7 @@ namespace HFDP {
                     DataPacket toSend;
                     toSend.size = IEEE_SIZE + RADIOTAP_SIZE + HEADER_SIZE + tempPack.size;
                     toSend.start = new char[toSend.size];
+                    flags |= tempPack.flags;
                     std::memcpy(toSend.start, &u8aRadiotapHeader, RADIOTAP_SIZE);
                     std::memcpy(toSend.start + RADIOTAP_SIZE, &u8aIeeeHeader_beacon, IEEE_SIZE);
                     std::memcpy(toSend.start + RADIOTAP_SIZE + MAC_OFFSET, m_this_mac, MAC_SIZE);

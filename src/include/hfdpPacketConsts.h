@@ -26,8 +26,8 @@
 
 //FLAGS
 #define HEARTBEAT 0x01
-#define ISFEC 0x02
-#define BEAM 0x04
+#define DATA_PACK 0x02
+#define FEC_PACK 0x04
 #define RESEND 0x08
 #define ENCODED 0x10
 #define SEND_TO_SLAVE 0x20
@@ -59,7 +59,6 @@ const u_int8_t u8aIeeeHeader_beacon[] = {
 	0x10, 0x86, // IEEE802.11 seqnum, (will be overwritten later by Atheros firmware/wifi chip)
 };
 
-#define MAX_SINGLE_PACKET_SIZE 1024
 #define MAC_OFFSET 10
 #define MAC_SIZE 6
 

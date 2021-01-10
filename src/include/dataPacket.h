@@ -1,6 +1,9 @@
 #ifndef HFDP_DATAPACKET
 #define HFDP_DATAPACKET
 
+#include <stdint.h>
+#include <cstdlib>
+
 namespace HFDP {
     struct DataPacket{
         uint8_t id;

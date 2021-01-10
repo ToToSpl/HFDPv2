@@ -5,6 +5,10 @@
 #include "../../lib/queue/blockingconcurrentqueue.h"
 #include "hfdpSocket.h"
 
+extern "C"{
+    #include "../../lib/fec/fec.h"
+}
+
 
 namespace HFDP {
     class FecManager {
@@ -21,6 +25,7 @@ namespace HFDP {
         void fromLocalThread();
         void fromAirThread();
         void decodeAndSend();
+        void encodeAndSend();
     private:
         std::unique_ptr<std::thread> m_fromLocalThread;
         std::unique_ptr<std::thread> m_fromAirThread;
@@ -28,7 +33,7 @@ namespace HFDP {
         std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> m_queue_in, m_queue_out;
         std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> m_queue_fromSocket, m_queue_toSocket;
         std::shared_ptr<HFDP_Socket> m_sockData;
-        uint8_t m_rssiCurr = 255;
+        uint8_t m_rssiCurrRx = 255, m_rssiCurrTx = 0;
         unsigned int m_M, m_N;
         unsigned char **m_dataBlocksIn, **m_fecBlocksIn, **m_dataBlocksOut, **m_fecBlocksOut;
         unsigned int m_M_rx_curr = 0, m_N_rx_curr = 0, m_M_tx_curr = 0, m_N_tx_curr = 0;

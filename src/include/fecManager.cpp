@@ -1,5 +1,5 @@
 #include "fecManager.h"
-#include "../../lib/fec/fec.h"
+#include "hfdpPacketConsts.h"
 
 namespace HFDP {
     FecManager::FecManager(std::shared_ptr<HFDP_Socket> dataSock) : m_sockData(dataSock)
@@ -60,17 +60,33 @@ namespace HFDP {
         while(1)
         {
             m_queue_out->wait_dequeue(recieved);
-            if(recieved.rssi != m_rssiCurr)
+
+            if(recieved.rssi != m_rssiCurrRx)
             {
-                if(m_M_rx_curr == 0 && m_N_rx_curr == 0) {
-                    m_rssiCurr = recieved.rssi;
-                } else {
+                if(!(m_M_rx_curr == 0 && m_N_rx_curr == 0)) {
                     decodeAndSend();
                     m_M_rx_curr = 0;
                     m_N_rx_curr = 0;
-                    m_rssiCurr = recieved.rssi;
                 }
             }
+            m_rssiCurrRx = recieved.rssi;
+
+            if(recieved.flags ^ DATA_PACK) {
+                std::memcpy(m_dataBlocksIn[m_M_rx_curr], recieved.start, m_sockData->getBufSize());
+                delete recieved.start;
+                m_M_rx_curr++;
+            } else if (recieved.flags ^ FEC_PACK) {
+                std::memcpy(m_fecBlocksIn[m_N_rx_curr], recieved.start, m_sockData->getBufSize());
+                delete recieved.start;
+                m_N_rx_curr++;
+            } else {
+                m_queue_toSocket->enqueue(recieved);
+            }
+
+            if(m_M_rx_curr == m_M && m_N_rx_curr == m_N) {
+                decodeAndSend();
+            }
+
         }
     }
 
@@ -99,6 +115,61 @@ namespace HFDP {
 
     void FecManager::fromLocalThread()
     {
-        
+        DataPacket recieved;
+
+        while(1)
+        {
+            m_queue_fromSocket->enqueue(recieved);
+
+            if(recieved.size != m_sockData->getBufSize()) {
+                m_queue_in->enqueue(recieved);
+                continue;
+            }
+
+            std::memcpy(m_dataBlocksOut[m_M_tx_curr], recieved.start, m_sockData->getBufSize());
+            m_M_tx_curr++;
+
+            if(m_M_tx_curr == m_M)
+            {
+                encodeAndSend();
+                m_rssiCurrTx++;
+                m_M_tx_curr = 0;
+            }
+
+            delete recieved.start;
+        }
+    }
+
+    void FecManager::encodeAndSend()
+    {
+        fec_encode(
+            (unsigned int) m_sockData->getBufSize(),
+            m_dataBlocksOut,
+            m_M,
+            m_fecBlocksOut,
+            m_N
+        );
+
+        for(unsigned int i = 0; i < m_M; i++)
+        {
+            DataPacket temp;
+            temp.start = (char*)m_dataBlocksOut[i];
+            temp.size = (std::size_t)m_sockData->getBufSize();
+            temp.id = m_sockData->getID();
+            temp.rssi = m_rssiCurrTx;
+            temp.flags = DATA_PACK;
+            m_queue_in->enqueue(temp);
+        }
+
+        for(unsigned int i = 0; i < m_N; i++)
+        {
+            DataPacket temp;
+            temp.start = (char*)m_fecBlocksOut[i];
+            temp.size = (std::size_t)m_sockData->getBufSize();
+            temp.id = m_sockData->getID();
+            temp.rssi = m_rssiCurrTx;
+            temp.flags = FEC_PACK;
+            m_queue_in->enqueue(temp);
+        }
     }
 }

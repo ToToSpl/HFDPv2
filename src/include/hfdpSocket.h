@@ -21,6 +21,9 @@ namespace HFDP {
         inline int getBufSize() { return m_BufferSize; };
         inline std::string getSocketType() { return m_SocketType; };
         inline int getResending() { return m_Resending; }; 
+    public:
+        inline uint8_t getPrevRssi() { return m_prev_RSSI; };
+        inline void setPrevRssi(uint8_t rssi) { m_prev_RSSI = rssi; };
     private:
         int m_ID;
         int m_Port;
@@ -31,7 +34,9 @@ namespace HFDP {
         std::string m_Direction;
         int m_BufferSize;
         std::string m_SocketType;
+    private:
         unsigned int m_Resending;
+        uint8_t m_prev_RSSI = 255;
     };
 }
 

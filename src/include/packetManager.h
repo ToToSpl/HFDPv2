@@ -36,6 +36,7 @@ namespace HFDP {
     private:
         std::vector<char*> m_mac_map;
         char* m_this_mac;
+        uint8_t m_prev_rssi = 255;
         uint8_t m_rssi;
     };
 }

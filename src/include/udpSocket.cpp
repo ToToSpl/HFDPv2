@@ -28,10 +28,35 @@ namespace HFDP {
                 LOG_F(ERROR, "Couldn't bind socket: %d", sock_data->getPort());
             }
         }
+
+        if(m_Sock_data->getFEC())
+        {
+            m_fecManager = std::make_unique<FecManager>(m_Sock_data);
+            m_fecManager->bindOutQueue(m_queue_out);
+        }
+    }
+
+    void UdpSocket::setRxQueue(std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> queue)
+    {
+        if(!m_Sock_data->getFEC())
+            m_queue_in = queue;
+        else {
+            m_fecManager->setRxQueue(queue);
+            m_queue_in = m_fecManager->getFromSocketQueue();
+        }
+    }
+
+    std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> UdpSocket::getTxQueue()
+    {
+        if(!m_Sock_data->getFEC())
+            return m_queue_out;
+        else
+            return m_fecManager->getTxQueue();
     }
 
     void UdpSocket::startSock()
     {
+        m_fecManager->startFec();
         m_Sock_In = std::make_unique<std::thread>(&UdpSocket::sockInThread, this);
         m_Sock_Out = std::make_unique<std::thread>(&UdpSocket::sockOutThread, this);
     }
@@ -52,7 +77,7 @@ namespace HFDP {
 				continue;
 			}
 
-            DataPacket pack = {(u_int8_t)m_Sock_data->getID(), msg_buf, msg_len};
+            DataPacket pack = {(u_int8_t)m_Sock_data->getID(), msg_buf, msg_len, 0, 0};
             m_queue_in->enqueue(pack);
         }
     }

@@ -80,9 +80,18 @@ namespace HFDP {
             {
                 if((uint8_t)sockPair.second->getID() == *id)
                 {
+                    //if this is resend packet skip this iterations
+                    if(sockPair.second->getResending() != 1 && *rssi == sockPair.second->getPrevRssi()) {
+                        delete tempPack.start;
+                        break;
+                    } else {
+                        sockPair.second->setPrevRssi(*rssi);
+                    }
                     DataPacket toSend;
                     toSend.id = *id;
                     toSend.size = size;
+                    toSend.flags = *flags;
+                    toSend.rssi = *rssi;
                     
                     toSend.start = new char[size];
                     std::memcpy(toSend.start, tempPack.start + HFDP_START_PLACE + DATA_OFFSET, size);
@@ -147,7 +156,7 @@ namespace HFDP {
         std::memcpy(ptr + SIZE_OFFSET, &size1, 1);
         std::memcpy(ptr + SIZE_OFFSET+1, &size2, 1);
         std::memcpy(ptr + DATA_OFFSET, data, size);
-        return {id, ptr, (std::size_t)(size + HEADER_SIZE)};
+        return {id, ptr, (std::size_t)(size + HEADER_SIZE), 0, 0};
     }
 
     DataPacket PacketManager::generateHFDPpacket(uint8_t id, uint8_t flags, uint8_t rssi, char* reMac, uint16_t size, char* data)

@@ -11,6 +11,7 @@
 
 #include "hfdpSocket.h"
 #include "dataPacket.h"
+#include "fecManager.h"
 
 
 namespace HFDP {
@@ -20,14 +21,16 @@ namespace HFDP {
         ~UdpSocket() { };
     public:
         void startSock();
-        inline void setRxQueue(std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> queue){ m_queue_in = queue; };
-        inline std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> getTxQueue(){ return m_queue_out; };
+        void setRxQueue(std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> queue);
+        std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> getTxQueue();
     public:
         inline void setID(int id) { m_ID = id; };
         inline int getID() { return m_ID; };
     private:
         void sockInThread();
         void sockOutThread();
+    private:
+        std::unique_ptr<FecManager> m_fecManager;
     private:
         int m_ID;
         std::shared_ptr<HFDP_Socket> m_Sock_data;

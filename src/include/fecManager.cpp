@@ -4,11 +4,13 @@
 namespace HFDP {
     FecManager::FecManager(std::shared_ptr<HFDP_Socket> dataSock) : m_sockData(dataSock)
     {
+        LOG_F(INFO, "creating fec handler for %i", m_sockData->getID());
         m_queue_out = std::make_shared<moodycamel::BlockingConcurrentQueue<DataPacket>>(10);
         m_queue_fromSocket = std::make_shared<moodycamel::BlockingConcurrentQueue<DataPacket>>(10);
 
         m_M = m_sockData->getFECm();
         m_N = m_sockData->getFECn();
+        LOG_F(INFO, "fec id: %i, m: %i, n: %i", m_sockData->getID(), m_M, m_N);
         fec_init();
         
         m_dataBlocksIn = new unsigned char*[m_M];
@@ -107,7 +109,8 @@ namespace HFDP {
         for(unsigned int i = 0; i < m_M; i++)
         {
             DataPacket temp;
-            temp.start = (char*)m_dataBlocksIn[i];
+            temp.start = new char[m_sockData->getBufSize()];
+            std::memcpy(temp.start, m_dataBlocksIn[i], m_sockData->getBufSize());
             temp.size = (std::size_t)m_sockData->getBufSize();
             m_queue_toSocket->enqueue(temp);
         }
@@ -119,7 +122,7 @@ namespace HFDP {
 
         while(1)
         {
-            m_queue_fromSocket->enqueue(recieved);
+            m_queue_fromSocket->wait_dequeue(recieved);
 
             if(recieved.size != m_sockData->getBufSize()) {
                 m_queue_in->enqueue(recieved);
@@ -153,7 +156,8 @@ namespace HFDP {
         for(unsigned int i = 0; i < m_M; i++)
         {
             DataPacket temp;
-            temp.start = (char*)m_dataBlocksOut[i];
+            temp.start = new char[m_sockData->getBufSize()];
+            std::memcpy(temp.start, m_dataBlocksOut[i], m_sockData->getBufSize());
             temp.size = (std::size_t)m_sockData->getBufSize();
             temp.id = m_sockData->getID();
             temp.rssi = m_rssiCurrTx;
@@ -164,7 +168,8 @@ namespace HFDP {
         for(unsigned int i = 0; i < m_N; i++)
         {
             DataPacket temp;
-            temp.start = (char*)m_fecBlocksOut[i];
+            temp.start = new char[m_sockData->getBufSize()];
+            std::memcpy(temp.start, m_fecBlocksOut[i], m_sockData->getBufSize());
             temp.size = (std::size_t)m_sockData->getBufSize();
             temp.id = m_sockData->getID();
             temp.rssi = m_rssiCurrTx;

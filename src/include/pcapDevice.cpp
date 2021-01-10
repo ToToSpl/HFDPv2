@@ -15,10 +15,10 @@ namespace HFDP {
 		    LOG_F(ERROR, "Couldn't open wifi device %s: %s", device.c_str(), error_buffer);
 	    }
 
-        lookup_return_code = pcap_activate(m_global_device);
-        if(lookup_return_code !=0){
-            LOG_F(ERROR, "Error activating pcap device! %s", error_buffer);
-        }
+        // lookup_return_code = pcap_activate(m_global_device);
+        // if(lookup_return_code != 0){
+        //     LOG_F(ERROR, "Error activating pcap device! %i", lookup_return_code);
+        // }
 
         lookup_return_code = pcap_setnonblock(m_global_device, 1, error_buffer);
         if(lookup_return_code != 0){

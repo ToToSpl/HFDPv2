@@ -38,9 +38,9 @@ namespace HFDP {
 
     void UdpSocket::setRxQueue(std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> queue)
     {
-        if(!m_Sock_data->getFEC())
+        if(!m_Sock_data->getFEC()) {
             m_queue_in = queue;
-        else {
+        } else {
             m_fecManager->setRxQueue(queue);
             m_queue_in = m_fecManager->getFromSocketQueue();
         }
@@ -56,7 +56,8 @@ namespace HFDP {
 
     void UdpSocket::startSock()
     {
-        m_fecManager->startFec();
+        if(m_Sock_data->getFEC())
+            m_fecManager->startFec();
         m_Sock_In = std::make_unique<std::thread>(&UdpSocket::sockInThread, this);
         m_Sock_Out = std::make_unique<std::thread>(&UdpSocket::sockOutThread, this);
     }

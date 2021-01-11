@@ -103,7 +103,7 @@ namespace HFDP {
                 for(unsigned int i = 0; i < m_K; i++)
                 {
                     char* start = new char[m_sockData->getBufSize()];
-                    if(writtenIndexes[i] = i) {
+                    if(writtenIndexes[i] == i) {
                         std::memcpy(start, m_dataBlocksIn[i], m_sockData->getBufSize());
                     } else {
                         std::memcpy(start, (m_dataBlocksIn + m_K)[compIndex], m_sockData->getBufSize());

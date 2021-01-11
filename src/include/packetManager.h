@@ -23,8 +23,8 @@ namespace HFDP {
         void fromAirThread();
         void fromLocalThread();
     private:
-        DataPacket generateHFDPpacket(uint8_t id, uint8_t flags, uint8_t rssi, char* reMac, uint16_t size, char* data);
-        DataPacket generateHFDPpacket(uint8_t id, uint8_t flags, uint8_t rssi, char* reMac, uint16_t size, char* data, char* ptr);
+        DataPacket generateHFDPpacket(uint8_t& id, uint8_t& flags, uint8_t& rssi, char* reMac, uint16_t size, char* data);
+        DataPacket generateHFDPpacket(uint8_t& id, uint8_t& flags, uint8_t& rssi, char* reMac, uint16_t size, char* data, char* ptr);
     private:
         std::unique_ptr<std::thread> m_air_thread;
         std::unique_ptr<std::thread> m_local_thread;

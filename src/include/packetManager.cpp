@@ -119,12 +119,13 @@ namespace HFDP {
                     DataPacket toSend;
                     toSend.size = IEEE_SIZE + RADIOTAP_SIZE + HEADER_SIZE + tempPack.size;
                     toSend.start = new char[toSend.size];
-                    flags |= tempPack.flags;
+                    flags = tempPack.flags;
                     std::memcpy(toSend.start, &u8aRadiotapHeader, RADIOTAP_SIZE);
                     std::memcpy(toSend.start + RADIOTAP_SIZE, &u8aIeeeHeader_beacon, IEEE_SIZE);
                     std::memcpy(toSend.start + RADIOTAP_SIZE + MAC_OFFSET, m_this_mac, MAC_SIZE);
                     std::memcpy(toSend.start + RADIOTAP_SIZE + MAC_OFFSET + MAC_SIZE, sockPair.second->getMAC(), MAC_SIZE);
-                    generateHFDPpacket(tempPack.id, flags, ++m_rssi, nullptr, tempPack.size, tempPack.start, toSend.start + RADIOTAP_SIZE + IEEE_SIZE);
+                    uint8_t rssi = sockPair.second->getFEC() ? tempPack.rssi : ++m_rssi;
+                    generateHFDPpacket(tempPack.id, flags, rssi, nullptr, tempPack.size, tempPack.start, toSend.start + RADIOTAP_SIZE + IEEE_SIZE);
                     if(sockPair.second->getResending() != 1)
                     {
                         for(int i = 1; i < sockPair.second->getResending(); i++)

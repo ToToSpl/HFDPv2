@@ -21,7 +21,7 @@ namespace HFDP {
 
         m_N = m_sockData->getFECn();
         m_K = m_sockData->getFECk();
-        LOG_F(INFO, "fec id: %i, m: %i, k: %i", m_sockData->getID(), m_K, m_N);
+        LOG_F(INFO, "fec id: %i, k: %i, n: %i", m_sockData->getID(), m_K, m_N);
         m_fec_ptr = fec_new((unsigned short) m_K, (unsigned short) m_N);
         
         m_dataBlocksIn = new unsigned char*[m_N];
@@ -134,6 +134,7 @@ namespace HFDP {
                 recieved.id = m_sockData->getID();
                 recieved.rssi = m_rssiCurrTx;
                 m_queue_in->enqueue(recieved);
+                continue;
             }
 
             std::memcpy(m_dataBlocksOut[m_K_tx_curr], recieved.start, m_sockData->getBufSize());
@@ -156,7 +157,7 @@ namespace HFDP {
                     temp.rssi = m_rssiCurrTx;
                     temp.flags = fec_number;
                     temp.size = m_sockData->getBufSize();
-                    temp.start = new char[temp.size];
+                    temp.start = new char[m_sockData->getBufSize()];
                     std::memcpy(temp.start, (m_dataBlocksOut + m_K)[i], m_sockData->getBufSize());
                     m_queue_in->enqueue(temp);
                     fec_number++;

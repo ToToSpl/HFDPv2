@@ -1,14 +1,13 @@
 #ifndef HFDP_FEC_MANAGER
 #define HFDP_FEC_MANAGER
 
-#include "dataPacket.h"
-#include "../../lib/queue/blockingconcurrentqueue.h"
-#include "hfdpSocket.h"
-
 extern "C"{
     #include "../../lib/fec/fec.h"
 }
 
+#include "dataPacket.h"
+#include "../../lib/queue/blockingconcurrentqueue.h"
+#include "hfdpSocket.h"
 
 namespace HFDP {
     class FecManager {
@@ -34,9 +33,10 @@ namespace HFDP {
         std::shared_ptr<moodycamel::BlockingConcurrentQueue<DataPacket>> m_queue_fromSocket, m_queue_toSocket;
         std::shared_ptr<HFDP_Socket> m_sockData;
         uint8_t m_rssiCurrRx = 255, m_rssiCurrTx = 0;
-        unsigned int m_M, m_N;
-        unsigned char **m_dataBlocksIn, **m_fecBlocksIn, **m_dataBlocksOut, **m_fecBlocksOut;
-        unsigned int m_M_rx_curr = 0, m_N_rx_curr = 0, m_M_tx_curr = 0, m_N_tx_curr = 0;
+        fec_t* m_fec_ptr;
+        unsigned int m_N, m_K;
+        unsigned char **m_dataBlocksIn, **m_dataBlocksOut;
+        unsigned int m_N_rx_curr = 0, m_K_rx_curr = 0, m_N_tx_curr = 0, m_K_tx_curr = 0;
     };
 }
 

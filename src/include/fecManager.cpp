@@ -1,6 +1,17 @@
 #include "fecManager.h"
 #include "hfdpPacketConsts.h"
 
+// returns index of the first placement which not equals to 255
+static inline unsigned int firstEmptyIndex(unsigned int* arr, unsigned int arrSize)
+{
+    for(unsigned int i = 0; i < arrSize; i++)
+    {
+        if(arr[i] == 255)
+            return i;
+    }
+    return 255;
+}
+
 namespace HFDP {
     FecManager::FecManager(std::shared_ptr<HFDP_Socket> dataSock) : m_sockData(dataSock)
     {
@@ -8,31 +19,23 @@ namespace HFDP {
         m_queue_out = std::make_shared<moodycamel::BlockingConcurrentQueue<DataPacket>>(10);
         m_queue_fromSocket = std::make_shared<moodycamel::BlockingConcurrentQueue<DataPacket>>(10);
 
-        m_M = m_sockData->getFECm();
         m_N = m_sockData->getFECn();
-        LOG_F(INFO, "fec id: %i, m: %i, n: %i", m_sockData->getID(), m_M, m_N);
-        fec_init();
+        m_K = m_sockData->getFECk();
+        LOG_F(INFO, "fec id: %i, m: %i, k: %i", m_sockData->getID(), m_K, m_N);
+        m_fec_ptr = fec_new((unsigned short) m_K, (unsigned short) m_N);
         
-        m_dataBlocksIn = new unsigned char*[m_M];
-        m_dataBlocksOut = new unsigned char*[m_M];
-        for(unsigned int i = 0; i < m_M; i++)
+        m_dataBlocksIn = new unsigned char*[m_N];
+        m_dataBlocksOut = new unsigned char*[m_N];
+        for(unsigned int i = 0; i < m_N; i++)
         {
             m_dataBlocksIn[i] = new unsigned char[m_sockData->getBufSize()];
             m_dataBlocksOut[i] = new unsigned char[m_sockData->getBufSize()];
-        }
-
-        m_fecBlocksIn = new unsigned char*[m_N];
-        m_fecBlocksOut = new unsigned char*[m_N];
-        for(unsigned int i = 0; i < m_N; i++)
-        {
-            m_fecBlocksIn[i] = new unsigned char[m_sockData->getBufSize()];
-            m_fecBlocksOut[i] = new unsigned char[m_sockData->getBufSize()];
         }
     }
 
     FecManager::~FecManager()
     {
-        for(unsigned int i = 0; i < m_M; i++)
+        for(unsigned int i = 0; i < m_N; i++)
         {
             delete m_dataBlocksIn[i];
             delete m_dataBlocksOut[i];
@@ -40,13 +43,7 @@ namespace HFDP {
         delete m_dataBlocksIn;
         delete m_dataBlocksOut;
 
-        for(unsigned int i = 0; i < m_N; i++)
-        {
-            delete m_fecBlocksIn[i];
-            delete m_fecBlocksOut[i];
-        }
-        delete m_fecBlocksIn;
-        delete m_fecBlocksOut;
+        fec_free(m_fec_ptr);
     }
 
     void FecManager::startFec()
@@ -58,123 +55,117 @@ namespace HFDP {
     void FecManager::fromAirThread()
     {
         DataPacket recieved;
+        unsigned int* writtenIndexes = new unsigned int[m_K];
+        std::memset(writtenIndexes, 255, m_K);
 
         while(1)
         {
             m_queue_out->wait_dequeue(recieved);
 
+            if(recieved.size != m_sockData->getBufSize())
+            {
+                m_queue_toSocket->enqueue(recieved);
+                continue;
+            }
+
+            // new chunk, reset sys
             if(recieved.rssi != m_rssiCurrRx)
             {
-                if(!(m_M_rx_curr == 0 && m_N_rx_curr == 0)) {
-                    decodeAndSend();
-                    m_M_rx_curr = 0;
-                    m_N_rx_curr = 0;
+                m_N_rx_curr = 0;
+                m_K_rx_curr = 0;
+                m_rssiCurrRx = recieved.rssi;
+                std::memset(writtenIndexes, 255, m_K);
+            }
+
+            if(m_N_rx_curr == m_K)
+            {
+                delete recieved.start;
+                continue;
+            }
+
+            unsigned short fec_index = recieved.flags & FEC_INDEX_MASK;
+            if(fec_index < m_K) {
+                writtenIndexes[fec_index] = fec_index;
+                std::memcpy(m_dataBlocksIn[fec_index], recieved.start, recieved.size);
+                m_K_rx_curr++;
+            } else {
+                auto index = firstEmptyIndex(writtenIndexes, m_K);
+                writtenIndexes[index] = fec_index;
+                std::memcpy(m_dataBlocksIn[index], recieved.start, recieved.size);
+            }
+            m_N_rx_curr++;
+            delete recieved.start;
+            
+            if(m_N_rx_curr == m_K)
+            {
+                fec_decode(m_fec_ptr, (const gf**)m_dataBlocksIn, (gf**)(m_dataBlocksIn + m_K), writtenIndexes, m_sockData->getBufSize());
+                unsigned int compIndex = 0;
+                for(unsigned int i = 0; i < m_K; i++)
+                {
+                    char* start = new char[m_sockData->getBufSize()];
+                    if(writtenIndexes[i] = i) {
+                        std::memcpy(start, m_dataBlocksIn[i], m_sockData->getBufSize());
+                    } else {
+                        std::memcpy(start, (m_dataBlocksIn + m_K)[compIndex], m_sockData->getBufSize());
+                        compIndex++;
+                    }
+
+                    DataPacket temp;
+                    temp.start = (char*)start;
+                    temp.size = m_sockData->getBufSize();
+                    m_queue_toSocket->enqueue(temp);
                 }
             }
-            m_rssiCurrRx = recieved.rssi;
-
-            if(recieved.flags ^ DATA_PACK) {
-                std::memcpy(m_dataBlocksIn[m_M_rx_curr], recieved.start, m_sockData->getBufSize());
-                delete recieved.start;
-                m_M_rx_curr++;
-            } else if (recieved.flags ^ FEC_PACK) {
-                std::memcpy(m_fecBlocksIn[m_N_rx_curr], recieved.start, m_sockData->getBufSize());
-                delete recieved.start;
-                m_N_rx_curr++;
-            } else {
-                m_queue_toSocket->enqueue(recieved);
-            }
-
-            if(m_M_rx_curr == m_M && m_N_rx_curr == m_N) {
-                decodeAndSend();
-            }
-
-        }
-    }
-
-    void FecManager::decodeAndSend()
-    {
-        unsigned int fecNos, erasedBlocks;
-
-        fec_decode(
-            (unsigned int) m_sockData->getBufSize(),
-            m_dataBlocksIn,
-            m_M_rx_curr,
-            m_fecBlocksIn,
-            &fecNos,
-            &erasedBlocks,
-            m_N_rx_curr
-        );
-
-        for(unsigned int i = 0; i < m_M; i++)
-        {
-            DataPacket temp;
-            temp.start = new char[m_sockData->getBufSize()];
-            std::memcpy(temp.start, m_dataBlocksIn[i], m_sockData->getBufSize());
-            temp.size = (std::size_t)m_sockData->getBufSize();
-            m_queue_toSocket->enqueue(temp);
         }
     }
 
     void FecManager::fromLocalThread()
     {
         DataPacket recieved;
+        uint8_t fec_number = 0;
 
         while(1)
         {
             m_queue_fromSocket->wait_dequeue(recieved);
 
-            if(recieved.size != m_sockData->getBufSize()) {
-                m_queue_in->enqueue(recieved);
-                continue;
-            }
-
-            std::memcpy(m_dataBlocksOut[m_M_tx_curr], recieved.start, m_sockData->getBufSize());
-            m_M_tx_curr++;
-
-            if(m_M_tx_curr == m_M)
+            if(recieved.size != m_sockData->getBufSize())
             {
-                encodeAndSend();
-                m_rssiCurrTx++;
-                m_M_tx_curr = 0;
+                recieved.flags = 0;
+                recieved.id = m_sockData->getID();
+                recieved.rssi = m_rssiCurrTx;
+                m_queue_in->enqueue(recieved);
             }
 
-            delete recieved.start;
-        }
-    }
+            std::memcpy(m_dataBlocksOut[m_K_tx_curr], recieved.start, m_sockData->getBufSize());
+            recieved.flags = fec_number;
+            recieved.id = m_sockData->getID();
+            recieved.rssi = m_rssiCurrTx;
 
-    void FecManager::encodeAndSend()
-    {
-        fec_encode(
-            (unsigned int) m_sockData->getBufSize(),
-            m_dataBlocksOut,
-            m_M,
-            m_fecBlocksOut,
-            m_N
-        );
+            m_queue_in->enqueue(recieved);
+            m_K_tx_curr++;
+            fec_number++;
 
-        for(unsigned int i = 0; i < m_M; i++)
-        {
-            DataPacket temp;
-            temp.start = new char[m_sockData->getBufSize()];
-            std::memcpy(temp.start, m_dataBlocksOut[i], m_sockData->getBufSize());
-            temp.size = (std::size_t)m_sockData->getBufSize();
-            temp.id = m_sockData->getID();
-            temp.rssi = m_rssiCurrTx;
-            temp.flags = DATA_PACK;
-            m_queue_in->enqueue(temp);
-        }
+            if(m_K_tx_curr == m_K)
+            {
+                fec_encode(m_fec_ptr, (const gf**)m_dataBlocksOut, (gf**)(m_dataBlocksOut + m_K), m_sockData->getBufSize());
 
-        for(unsigned int i = 0; i < m_N; i++)
-        {
-            DataPacket temp;
-            temp.start = new char[m_sockData->getBufSize()];
-            std::memcpy(temp.start, m_fecBlocksOut[i], m_sockData->getBufSize());
-            temp.size = (std::size_t)m_sockData->getBufSize();
-            temp.id = m_sockData->getID();
-            temp.rssi = m_rssiCurrTx;
-            temp.flags = FEC_PACK;
-            m_queue_in->enqueue(temp);
+                for(unsigned int i = 0; i < (m_N - m_K); i++)
+                {
+                    DataPacket temp;
+                    temp.id = m_sockData->getID();
+                    temp.rssi = m_rssiCurrTx;
+                    temp.flags = fec_number;
+                    temp.size = m_sockData->getBufSize();
+                    temp.start = new char[temp.size];
+                    std::memcpy(temp.start, (m_dataBlocksOut + m_K)[i], m_sockData->getBufSize());
+                    m_queue_in->enqueue(temp);
+                    fec_number++;
+                }
+
+                fec_number = 0;
+                m_K_tx_curr = 0;
+                m_rssiCurrTx++;
+            }
         }
     }
 }

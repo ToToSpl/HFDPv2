@@ -1,5 +1,6 @@
 #include "pcapDevice.h"
 #include <cstring>
+#include <sys/resource.h>
 
 static void rx_callback(u_int8_t *user, const struct pcap_pkthdr *h, const u_int8_t *bytes);
 
@@ -53,12 +54,14 @@ namespace HFDP {
 
     void Pcap::rx_thread()
     {
+        setpriority(PRIO_PROCESS, 0, -10);
         pcap_loop(m_global_device, -1, rx_callback, (u_int8_t*) this);
         LOG_F(ERROR, "Pcap loop broken!");
     }
 
     void Pcap::tx_thread()
     {
+        setpriority(PRIO_PROCESS, 0, -10);
         DataPacket packet;
         int lookup_return_code;
 

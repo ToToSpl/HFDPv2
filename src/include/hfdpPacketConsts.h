@@ -24,15 +24,17 @@
 #define REMAC_SIZE 6
 #define SIZE_SIZE 2
 
+//when using fec, first 4 bits are used to determine packet index
 //FLAGS
 #define HEARTBEAT 0x01
-#define DATA_PACK 0x02
-#define FEC_PACK 0x04
-#define RESEND 0x08
-#define ENCODED 0x10
+#define EMPTY_1 0x02
+#define EMPTY_2 0x04
+#define PACKET_END 0x08
+#define FRACTURED_PACKET 0x10
 #define SEND_TO_SLAVE 0x20
-#define FRACTURED_PACKET 0x40
-#define PACKET_END 0x80
+#define RESEND 0x40
+#define ENCODED 0x80
+#define FEC_INDEX_MASK 0x0F
 
 //current working header for alfa awus036nh
 

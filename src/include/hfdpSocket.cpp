@@ -10,7 +10,7 @@ namespace HFDP {
         m_FEC = sockConfig["fec"];
         if(m_FEC)
         {
-            m_FEC_m = sockConfig["fec_m"];
+            m_FEC_k = sockConfig["fec_k"];
             m_FEC_n = sockConfig["fec_n"];
         }
         m_Target_MAC = new char[MAC_SIZE];

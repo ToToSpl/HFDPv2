@@ -8,7 +8,7 @@
         "id": 0,
         "port": 10000,
         "fec": true,
-        "fec_n": 8,
+        "fec_n": 6,
         "fec_k": 4,
         "target_mac": "00:C0:CA:97:EE:FD",
         "direction": "input",

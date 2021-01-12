@@ -6,10 +6,10 @@ static inline unsigned int firstEmptyIndex(unsigned int* arr, unsigned int arrSi
 {
     for(unsigned int i = 0; i < arrSize; i++)
     {
-        if(arr[i] == 255)
+        if(arr[i] == -1)
             return i;
     }
-    return 255;
+    return -1;
 }
 
 namespace HFDP {
@@ -56,7 +56,7 @@ namespace HFDP {
     {
         DataPacket recieved;
         unsigned int* writtenIndexes = new unsigned int[m_K];
-        std::memset(writtenIndexes, 255, m_K);
+        std::memset(writtenIndexes, -1, sizeof(writtenIndexes));
 
         while(1)
         {
@@ -74,7 +74,9 @@ namespace HFDP {
                 m_N_rx_curr = 0;
                 m_K_rx_curr = 0;
                 m_rssiCurrRx = recieved.rssi;
-                std::memset(writtenIndexes, 255, m_K);
+                //std::memset(writtenIndexes, -1, sizeof(writtenIndexes));
+                for(int i = 0; i < m_K; i++)
+                    writtenIndexes[i] = -1;
             }
 
             if(m_N_rx_curr == m_K)
@@ -82,7 +84,7 @@ namespace HFDP {
                 delete recieved.start;
                 continue;
             }
-
+            
             unsigned short fec_index = recieved.flags & FEC_INDEX_MASK;
             if(fec_index < m_K) {
                 writtenIndexes[fec_index] = fec_index;
@@ -90,8 +92,11 @@ namespace HFDP {
                 m_K_rx_curr++;
             } else {
                 auto index = firstEmptyIndex(writtenIndexes, m_K);
-                writtenIndexes[index] = fec_index;
-                std::memcpy(m_dataBlocksIn[index], recieved.start, recieved.size);
+                if(index != -1)
+                {
+                    writtenIndexes[index] = fec_index;
+                    std::memcpy(m_dataBlocksIn[index], recieved.start, recieved.size);
+                }
             }
             m_N_rx_curr++;
             delete recieved.start;
